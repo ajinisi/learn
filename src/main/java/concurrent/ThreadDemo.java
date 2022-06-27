@@ -4,6 +4,10 @@ package concurrent;
  学习线程的创建
  */
 
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
+
 public class ThreadDemo {
 
     // 继承实现
@@ -29,7 +33,18 @@ public class ThreadDemo {
     }
 
 
-    public static void main(String[] args) {
+
+    static class ReturnableTask implements Callable<Long> {
+
+        @Override
+        public Long call() throws Exception {
+            Thread.sleep(5000);
+            System.out.println("callable");
+            return 100L;
+        }
+    }
+
+    public static void main(String[] args) throws ExecutionException, InterruptedException {
 
 
         Thread thread = null;
@@ -53,6 +68,41 @@ public class ThreadDemo {
             thread = new Thread(runnable);
             thread.start();
         }
+
+        // 两个匿名实例
+        for (int i = 0; i < 2; i++) {
+            thread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    for (int i = 0; i < 5; i++) {
+                        System.out.println(Thread.currentThread().getName() + "匿名轮次" + i);
+                    }
+                }
+            });
+            thread.start();
+        }
+
+        // 两个Lambda表达式
+        for (int i = 0; i < 2; i++) {
+            thread = new Thread(() -> {
+                for (int j = 0; j < 5; j++) {
+                    System.out.println(Thread.currentThread().getName() + "Lambda轮次" + j);
+                }
+            });
+            thread.start();
+        }
+
+
+
+        // Callable返回异步结果
+        ReturnableTask returnableTask = new ReturnableTask();
+        FutureTask<Long> futureTask = new FutureTask<Long>(returnableTask);
+        thread = new Thread(futureTask);
+        thread.start();
+        // 这是一个阻塞方法
+        System.out.println("异步结果" + futureTask.get());
+
+
 
         System.out.println(Thread.currentThread().getName() + "运行结束");
     }
